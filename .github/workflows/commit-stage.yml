@@ -5,6 +5,8 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: tinsae-yb/apsd-lab-10
   VERSION: 1.0.0
+
+
 jobs:
   package:
     name: package and release
@@ -27,6 +29,19 @@ jobs:
         run: |
           chmod +x mvnw
           ./mvnw spring-boot:build-image -DskipTests  -Dspring-boot.build-image.imageName=${{env.REGISTRY}}/${{env.IMAGE_NAME}}:${{env.VERSION}}
+      - name: OCI image vulnerability scan
+        uses: anchore/scan-action@v3
+        id: scan
+        with:
+          image: ${{env.REGISTRY}}/${{env.IMAGE_NAME}}:${{env.VERSION}}
+          fail-build: false
+          severity-cutoff: "high"
+          acs-report-enable: true
+#      - name: Upload vulnerability report
+#        uses: github/codeql-action/upload-sarif@v2
+#        if: success() || failure()
+#        with:
+#          sarif_file: ${{ steps.scan.outputs.sarif }}
       - name: login to container registry
         uses: docker/login-action@v1
         with:
